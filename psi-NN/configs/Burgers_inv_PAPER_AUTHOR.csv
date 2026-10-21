@@ -1,0 +1,38 @@
+Names,Values,Burgers case,Author's hand-coded structured comparison
+
+x_min,0,minimum time,
+x_max,1,maximum time,
+y_min,-1,minimum space,
+y_max,1,maximum space,
+z_min,0,,
+z_max,0,,
+
+model,PsiNN_burgers,author structure in Module/PsiNN_burgers.py,
+regularization_state,0,,
+load_state,0,,
+load_study_state,0,,
+k_value,0,,
+
+grid_node_num,101,,
+bun_node_num,101,,
+figure_node_num,200,,
+
+data_serial,"1,3",same 20 sparse data as teacher,
+para_ctrl,"0.01",viscosity scale in source data,
+para_ctrl_add,0,,
+
+node_num,5,submatrix dimension d from Supplementary Table 4,
+coord_num,2,,
+output_num,1,,
+hidden_layers_group,"1,2,1",unused by PsiNN_burgers,
+hidden_layers_group_student,"1,1,1",unused,
+
+step_num,1,,
+train_steps,100000,Supplementary Table 4,
+train_ratio,1,unused,
+
+pace_record_state,1,,
+pace_record_gap,"1000,1000",fewer intermediate files,
+pace_record_skip,"0,50000",,
+
+learning_rate,"1e-4",,

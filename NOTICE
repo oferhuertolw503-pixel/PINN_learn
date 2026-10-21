@@ -1,0 +1,15 @@
+PINN_learn
+
+This repository contains independent reproduction scripts, experiment
+configurations, measurements, and notes for studying physics-informed neural
+networks. Those original contributions are made available under Apache-2.0.
+
+The file psi-NN/patches/upstream-local.patch records changes to the upstream
+Psi-NN project by Ziti Liu and contributors:
+https://github.com/ZitiLiu/Psi-NN
+Upstream commit: 2c11ce6df1bcfcf630d05f162d5795d7fa4fdb43
+The upstream project is licensed under Apache-2.0. The patch shows which
+upstream lines were modified; the upstream repository itself is not included.
+
+The research paper, its PDF, the upstream experimental data, model checkpoints,
+and training logs are not redistributed in this repository.

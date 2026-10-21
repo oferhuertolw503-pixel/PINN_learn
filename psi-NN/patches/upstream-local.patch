@@ -1,0 +1,132 @@
+diff --git a/Module/GroupVis.py b/Module/GroupVis.py
+index d510093..91f16f3 100644
+--- a/Module/GroupVis.py
++++ b/Module/GroupVis.py
+@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
+ 
+ class Vis():
+     plt.rcParams["figure.dpi"] = 300
+-    plt.rcParams['font.sans-serif'] = ['Times New Roman']
++    plt.rcParams['font.sans-serif'] = ['Times New Roman', 'DejaVu Sans']
+     plt.rcParams['xtick.labelsize'] = 10    #轴标签大小
+     plt.rcParams['ytick.labelsize'] = 10    
+     plt.rcParams['axes.titlesize'] = 17     #标题字体大小
+@@ -114,4 +114,4 @@ class Vis():
+                 plt.ylabel(self.para_header[j+1], fontdict=font)
+             plt.title(self.ques_name + ' ' + self.para_header[j+1] + ' ' + 'Comparison', pad=8)
+             plt.savefig(self.para_desti + self.ques_name + '_' +str(self.ini_num) +'_'+ self.para_header[j+1] + '_' + 'comparison' + '.png', bbox_inches='tight')
+-            plt.close()    
+\ No newline at end of file
++            plt.close()
+diff --git a/Module/SingleVis.py b/Module/SingleVis.py
+index 9e04ed5..764e472 100644
+--- a/Module/SingleVis.py
++++ b/Module/SingleVis.py
+@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
+ import matplotlib.tri as tri
+ class Vis():
+     plt.rcParams["figure.dpi"] = 300
+-    plt.rcParams['font.sans-serif'] = ['Times New Roman']
++    plt.rcParams['font.sans-serif'] = ['Times New Roman', 'DejaVu Sans']
+     plt.rcParams['xtick.labelsize'] = 10    #轴标签大小
+     plt.rcParams['ytick.labelsize'] = 10    
+     plt.rcParams['axes.titlesize'] = 17     #标题字体大小
+@@ -51,7 +51,7 @@ class Vis():
+             plt.title(self.ques_name + ' ' + header[j+1] + ' ' +self.module_name, pad=10)
+             plt.savefig(self.loss_desti + self.ques_name +'_'+str(self.ini_num)+'_' + header[j+1] + '_' + self.module_name + '.png', bbox_inches='tight')
+             plt.close()
+-    
++
+     def figure_2d(self):
+         self.figure_desti = self.file_densti + '/Figure/'
+         if not os.path.exists(self.figure_desti):
+@@ -139,5 +139,5 @@ class Vis():
+             plt.savefig(self.para_desti + self.ques_name +'_'+str(self.ini_num)+'_' + header[j+1] + '_' +self.module_name + '.png', bbox_inches='tight')
+             plt.close()
+ 
+-    
+-    
+\ No newline at end of file
++
++
+diff --git a/Module/Training.py b/Module/Training.py
+index 74f789d..2bb22cb 100644
+--- a/Module/Training.py
++++ b/Module/Training.py
+@@ -378,10 +378,12 @@ class model():
+ 
+ 
+         u_x = torch.autograd.grad(u, self.x, grad_outputs=torch.ones_like(u), retain_graph=True, create_graph=True)[0]    #这就是自动微分的一整个公式，直接照着抄就行了
+-        u_xx = torch.autograd.grad(u_x, self.x, grad_outputs=torch.ones_like(u_x), retain_graph=True, create_graph=True)[0]
++        if 'Burgers' not in self.ques_name:
++            u_xx = torch.autograd.grad(u_x, self.x, grad_outputs=torch.ones_like(u_x), retain_graph=True, create_graph=True)[0]
+         u_y = torch.autograd.grad(u, self.y, grad_outputs=torch.ones_like(u), retain_graph=True, create_graph=True)[0]
+         u_yy = torch.autograd.grad(u_y, self.y, grad_outputs=torch.ones_like(u_y), retain_graph=True, create_graph=True)[0]
+-        u_yyy = torch.autograd.grad(u_yy, self.y, grad_outputs=torch.ones_like(u_yy), retain_graph=True, create_graph=True)[0]
++        if 'Burgers' not in self.ques_name:
++            u_yyy = torch.autograd.grad(u_yy, self.y, grad_outputs=torch.ones_like(u_yy), retain_graph=True, create_graph=True)[0]
+ 
+         #方程误差
+         if 'Burgers' in self.ques_name:
+@@ -497,19 +499,22 @@ class model():
+     def net_d(self, mode = 'teacher'):
+         loss_d = torch.tensor(0.).to(device)
+ 
++        if mode == 'student' and self.k_value <= 0:
++            return loss_d
++
+         # 这里采用一个临时的将名称分离的策略
+         ques_name = self.ques_name.split('_')[0]
+ 
+         
+         # 由于要堆叠，所以这里先弄一个进去
+         # current_read = pd.read_csv(f'./Database/{self.ques_name}_data_{self.data_serial[0]}.csv', header=None).values
+-        current_read = pd.read_csv(f'./Database/{ques_name}_inv_data_{self.data_serial[0]}.csv', header=None).values
+-
+-        self.database = current_read
+-        for i in range(1, len(self.data_serial)):
+-            # current_read = pd.read_csv(f'./Database/{self.ques_name}_data_{self.data_serial[i]}.csv', header=None).values
+-            current_read = pd.read_csv(f'./Database/{ques_name}_inv_data_{self.data_serial[i]}.csv', header=None).values
+-            self.database = np.vstack([self.database,current_read])
++        if not hasattr(self, '_monitor_database'):
++            current_read = pd.read_csv(f'./Database/{ques_name}_inv_data_{self.data_serial[0]}.csv', header=None).values
++            self._monitor_database = current_read
++            for i in range(1, len(self.data_serial)):
++                current_read = pd.read_csv(f'./Database/{ques_name}_inv_data_{self.data_serial[i]}.csv', header=None).values
++                self._monitor_database = np.vstack([self._monitor_database,current_read])
++        self.database = self._monitor_database
+         
+         # 由于这些监督值往往在存储的时候已经是meshgrid之后的状态，所以这里就不再进行meshgrid
+         self.input_monitor = self.database[:,0:self.input_num].reshape([-1,self.input_num])
+@@ -598,7 +603,13 @@ class model():
+         self.optimizer = optim.Adam(list(self.net.parameters()) + [self.para_undetermin], lr=self.learning_rate)
+ 
+        
+-        self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=self.milestone, gamma=self.gamma)
++        # 上游只有 Flow_EXP.csv 定义了 milestone，其余配置此项为 None，
++        # 而 torch 的 MultiStepLR 不接受 None（内部 list(None) 会抛 TypeError）。
++        # 按作者原意处理：没有 milestone 就不使用学习率调度器。
++        self.scheduler = (
++            optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=self.milestone, gamma=self.gamma)
++            if self.milestone else None
++        )
+ 
+         if self.distill_state:
+             self.optimizer_student = optim.Adam(list(self.net_student.parameters()), lr=self.learning_rate) 
+@@ -644,7 +655,8 @@ class model():
+                     self.loss.backward(retain_graph=True)
+ 
+                 self.optimizer.step()    
+-                self.scheduler.step()
++                if self.scheduler is not None:
++                    self.scheduler.step()
+ 
+ 
+                 self.net.iter += 1
+@@ -944,4 +956,4 @@ class model():
+                 group.para_vis()
+ 
+         if model_define_trigger == 0:
+-            raise ValueError('The model name is incorrect. Please check again.')
+\ No newline at end of file
++            raise ValueError('The model name is incorrect. Please check again.')

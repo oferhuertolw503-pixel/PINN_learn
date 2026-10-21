@@ -1,0 +1,33 @@
+# The upstream author repository is a separate checkout, not this project's source.
+/psi-NN/Psi-NN/
+
+# Local research materials and machine-specific notes (not cleared for publication).
+/复现工作记录.md
+/论文算例实跑台账.md
+/我的一些想法与问题.md
+/公开数据集.md
+/*.pdf
+/Pasted image *.png
+/tmp/
+
+# Training output, environments, caches, credentials.
+**/Results/
+**/__pycache__/
+*.py[cod]
+*.pth
+*.pt
+*.ckpt
+*.log
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+pip.conf
+*.pem
+*.key
+
+# Editor and OS files.
+.DS_Store
+.idea/
+.vscode/
