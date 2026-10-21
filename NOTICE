@@ -11,5 +11,10 @@ Upstream commit: 2c11ce6df1bcfcf630d05f162d5795d7fa4fdb43
 The upstream project is licensed under Apache-2.0. The patch shows which
 upstream lines were modified; the upstream repository itself is not included.
 
+psi-NN/patches/learning-comments.patch adds Chinese educational comments
+to the same upstream files after upstream-local.patch. It preserves the
+runtime-patched executable Python syntax. Attribution and license of the
+upstream code remain unchanged.
+
 The research paper, its PDF, the upstream experimental data, model checkpoints,
 and training logs are not redistributed in this repository.

@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "arguments": {
+      "case": "Poisson",
+      "device": "cpu",
+      "steps": 20,
+      "grid": null,
+      "models": null,
+      "threads": 4,
+      "tag": "smoke"
+    },
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "mps_built": true,
+    "mps_available": false,
+    "note": "Short runs test execution and cost, not paper accuracy. Plotting disabled."
+  },
+  "results": [
+    {
+      "model": "PINN",
+      "steps": 20,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 1381,
+      "elapsed_seconds": 0.6367814580007689,
+      "training_seconds": 0.2789609432220459,
+      "seconds_per_teacher_step": 0.013948047161102295,
+      "first_loss": 21.762134552001953,
+      "final_loss": 21.664609909057617,
+      "peak_process_rss_mib": 480.3125
+    },
+    {
+      "model": "PINN_post_poisson",
+      "steps": 20,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 1381,
+      "elapsed_seconds": 0.5442655000006198,
+      "training_seconds": 0.5414683818817139,
+      "seconds_per_teacher_step": 0.027073419094085692,
+      "first_loss": 21.94944953918457,
+      "final_loss": 21.701387405395508,
+      "peak_process_rss_mib": 623.421875
+    },
+    {
+      "model": "PsiNN_poisson",
+      "steps": 20,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 2161,
+      "elapsed_seconds": 0.606880084000295,
+      "training_seconds": 0.6037471294403076,
+      "seconds_per_teacher_step": 0.03018735647201538,
+      "first_loss": 21.700925827026367,
+      "final_loss": 21.408477783203125,
+      "peak_process_rss_mib": 637.390625
+    }
+  ]
+}

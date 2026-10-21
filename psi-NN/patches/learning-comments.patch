@@ -1,0 +1,566 @@
+diff --git a/Module/PINN.py b/Module/PINN.py
+index afbaf99..a216944 100644
+--- a/Module/PINN.py
++++ b/Module/PINN.py
+@@ -1,6 +1,8 @@
+ # import numpy as np
+ # coding = utf-8
+ import torch
++# 【从 micrograd 对照看】nn.Module 类似你写过的 MLP/Layer：装参数并定义前向计算。
++# PyTorch 会自动登记放在 Module 内的子层，供 .parameters()、.to(device)、保存等使用。
+ # from torch.utils.data import DataLoader
+ # import torch.nn as nn
+ # import torch.nn.functional as F
+@@ -11,27 +13,35 @@ from collections import OrderedDict
+ 
+ class Net(torch.nn.Module):
+     def __init__(self, layers):
++        # layers 例如 [2,8,8,16,1]：每行输入两个坐标，每行输出一个预测值。
++        # super() 先初始化父类，之后才能正确登记网络层和参数。
+         super(Net, self).__init__()
+         # parameters
+         self.depth = len(layers) - 1
+ 
+         # set up layer order dict
++        # Tanh 就是 micrograd 里见过的 tanh，提供非线性，且可以求平滑的高阶导数。
+         self.activation = torch.nn.Tanh
+ 
+         layer_list = list()
+         for i in range(self.depth - 1):
+             layer_list.append(
++                # Linear(m,n)：每个样本做 h @ W.T + b，形状 [N,m] → [N,n]。
++                # 一次处理 N 行样本，比逐点写 Python 循环更方便；W、b 是学习的参数。
+                 ('layer_%d' % i, torch.nn.Linear(layers[i], layers[i + 1]))
+             )
+             layer_list.append(('activation_%d' % i, self.activation()))
+ 
++        # 最后一层不接 tanh：这里回归连续 u 值，不必把结果限制在 [-1,1]。
+         layer_list.append(
+             ('layer_%d' % (self.depth - 1), torch.nn.Linear(layers[-2], layers[-1]))
+         )
+         layerDict = OrderedDict(layer_list)
+ 
+         # deploy layers
++        # Sequential 按顺序执行各层；OrderedDict 只是给各层取名并保持顺序。
+         self.layers = torch.nn.Sequential(layerDict)
++        # 下面这些 list 只记日志，不是模型参数，不会被 Adam 优化。
+         self.iter = 0
+         self.iter_list = []
+         self.loss_list = []
+@@ -43,6 +53,8 @@ class Net(torch.nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, x):
++        # 当外部写 net(x) 时，nn.Module 会调用这里。x 是 [N,输入维数] 的张量。
++        # forward 只算预测，不更新参数；更新发生在 Training.py 的 optimizer.step()。
+         out = self.layers(x)
+         return out
+     
+diff --git a/Module/PINN_post_flow.py b/Module/PINN_post_flow.py
+index 0510f86..c7b88d9 100644
+--- a/Module/PINN_post_flow.py
++++ b/Module/PINN_post_flow.py
+@@ -42,9 +42,11 @@ class Net(torch.nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, input):
++        # 网络输出的三列是 p,u,v。对镜像坐标 y→-y 再计算一次：
++        # p,u 用相加保证偶对称，v 用相减保证奇对称；纵坐标已在训练类中减去 0.2。
+         x, y = input[:, 0:1], input[:, 1:2]
+         output_1 = self.layers(torch.cat([x, y], dim=1))
+         output_2 = self.layers(torch.cat([x, -y], dim=1))
+         p, u, v = output_1[:, 0:1] + output_2[:, 0:1], output_1[:, 1:2] + output_2[:, 1:2], output_1[:, 2:3] - output_2[:, 2:3]
+         output = torch.cat([p, u, v], dim=1)
+-        return output
+\ No newline at end of file
++        return output
+diff --git a/Module/PINN_post_minus.py b/Module/PINN_post_minus.py
+index a8334c8..cbf35da 100644
+--- a/Module/PINN_post_minus.py
++++ b/Module/PINN_post_minus.py
+@@ -42,7 +42,9 @@ class Net(torch.nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, input):
++        # f(x,y)-f(x,-y)：y 变号后整体变号，因此输出关于第二坐标严格奇对称。
++        # Burgers 中第一个坐标是时间，第二个是空间；这里改变的是空间坐标的符号。
+         x, y = input[:, 0:1], input[:, 1:2]
+         out = self.layers(torch.cat([x, y], dim=1)) - self.layers(torch.cat([x, -y], dim=1))
+         # out = self.layers(torch.cat([x, y], dim=1))
+-        return out
+\ No newline at end of file
++        return out
+diff --git a/Module/PINN_post_plus.py b/Module/PINN_post_plus.py
+index a0065f8..5668101 100644
+--- a/Module/PINN_post_plus.py
++++ b/Module/PINN_post_plus.py
+@@ -42,6 +42,8 @@ class Net(torch.nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, input):
++        # 同一个普通 MLP 分别看 (x,y)、(x,-y)，两次输出相加以保证 y 的偶对称。
++        # 同一个 self.layers 被复用，只有一套参数；反向传播会合并两条路径的梯度。
+         x, y = input[:, 0:1], input[:, 1:2]
+         out = self.layers(torch.cat([x, y], dim=1)) + self.layers(torch.cat([x, -y], dim=1))
+-        return out
+\ No newline at end of file
++        return out
+diff --git a/Module/PINN_post_poisson.py b/Module/PINN_post_poisson.py
+index 345ee26..2f2615a 100644
+--- a/Module/PINN_post_poisson.py
++++ b/Module/PINN_post_poisson.py
+@@ -42,7 +42,8 @@ class Net(torch.nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, input):
++        # f(x,y)+f(y,x)：交换两个坐标后只是两项互换，所以输出不变。
+         x, y = input[:, 0:1], input[:, 1:2]
+         out = self.layers(torch.cat([x, y], dim=1)) + self.layers(torch.cat([y, x], dim=1))
+         # out = self.layers(torch.cat([x, y], dim=1))
+-        return out
+\ No newline at end of file
++        return out
+diff --git a/Module/PsiNN_burgers.py b/Module/PsiNN_burgers.py
+index 9d38247..4732196 100644
+--- a/Module/PsiNN_burgers.py
++++ b/Module/PsiNN_burgers.py
+@@ -4,6 +4,8 @@ import torch
+ import torch.nn as nn
+   
+ class Net(nn.Module):
++    # 共享层 + 加减分支用于构造对空间坐标的奇对称特征。
++    # 本案例 input[:,0:1] 是时间，input[:,1:2] 是空间；别被变量名 x,y 误导。
+     def __init__(self, node_num:int, output_num: int = 1):
+         super(Net, self).__init__()
+ 
+@@ -28,6 +30,9 @@ class Net(nn.Module):
+         self.fc3_2 = nn.Linear(self.node_num, 2*self.node_num, bias=False)
+ 
+         #最后一层需要一种，这里由于是奇函数所以去掉最终的bias
++        # 【核对原注释】下面实际未设置 bias=False，默认仍有输出偏置。
++        # 所以最终输出是“奇函数特征的线性组合 + bias”，并非严格奇函数。
++        # 保留作者原代码；这里只解释它实际做了什么。
+         self.fc4_1 = nn.Linear(2*self.node_num, output_num)
+  
+ 
+@@ -43,6 +48,7 @@ class Net(nn.Module):
+ 
+     # 定义数据的流动方式，要放在类的缩进里面
+     def forward(self, input):
++        # 与普通 MLP 不同的只是前向连接；autograd 会自动沿这些共享分支累加参数梯度。
+ 
+         x,y = input[:,0:1], input[:,1:2]
+ 
+@@ -68,4 +74,4 @@ class Net(nn.Module):
+         #最后的输出
+         u = self.fc4_1(u3_1) 
+        
+-        return u
+\ No newline at end of file
++        return u
+diff --git a/Module/PsiNN_flow.py b/Module/PsiNN_flow.py
+index d16886a..41f0145 100644
+--- a/Module/PsiNN_flow.py
++++ b/Module/PsiNN_flow.py
+@@ -42,6 +42,8 @@ class Net(nn.Module):
+ 
+     # 定义数据的流动方式，要放在类的缩进里面
+     def forward(self, input):
++        # [N,2] 坐标输入 → 三个连续输出 [N,3]，顺序是压力 p、水平速度 u、竖直速度 v。
++        # 后面的 net_f 会分别对这些输出求导，组成连续性和两个动量方程损失。
+ 
+         x, y = input[:,0:1], input[:,1:2]
+         
+@@ -61,6 +63,8 @@ class Net(nn.Module):
+         u3_2 = torch.tanh(self.fc3_2(u2_3) + self.fc3_2(u2_4))
+         
+         #最后的输出
++        # cat 在列方向拼接两组特征，再让最后的线性层生成 p,u,v。
++        # 此自由线性层会混合两类特征，不会自动保证各输出分别具有指定奇/偶对称性。
+         u = self.fc4_1(torch.cat([u3_1,u3_2],dim=1)) 
+        
+-        return u
+\ No newline at end of file
++        return u
+diff --git a/Module/PsiNN_laplace.py b/Module/PsiNN_laplace.py
+index d4cf544..9f01ad2 100644
+--- a/Module/PsiNN_laplace.py
++++ b/Module/PsiNN_laplace.py
+@@ -4,6 +4,9 @@ import torch
+ import torch.nn as nn
+ 
+ class Net(nn.Module):
++    # 【第二遍再读】它仍是神经网络，只是同一组权重会用于多个分支。
++    # 同一个 self.fc... 被调用两次 = 共享同一套参数，不是复制两套独立参数。
++    # 与普通 PINN 的差别在 forward 的连接关系；训练仍用相同的 loss/backward/Adam。
+     def __init__(self, node_num:int, output_num:int=1):
+         
+         super(Net, self).__init__()
+@@ -46,24 +49,30 @@ class Net(nn.Module):
+     # 定义数据的流动方式，要放在类的缩进里面
+     def forward(self, input):
+ 
++        # input 为 [N,2]；0:1 保留“列”这个维度，得到 [N,1]，而非 [N]。
++
+         x,y = input[:,0:1],input[:,1:2]
+ 
+         # u1_1 = torch.tanh(self.fc1_1(x) + self.fc1_3(y))
+         # u1_2 = torch.tanh(self.fc1_1(x) - self.fc1_3(y))
++        # y 变成 -y 时，下面两支互换。fc1_4 没有 bias，使其对 y 的映射是奇函数。
+         u1_3 = torch.tanh(self.fc1_2(x) + self.fc1_4(y))
+         u1_4 = torch.tanh(self.fc1_2(x) - self.fc1_4(y))
+ 
+         #第二层的输出结果也是四种
+         # u2_1 = torch.tanh(self.fc2_1(u1_1) + self.fc2_3(u1_2))
+         # u2_2 = torch.tanh(self.fc2_3(u1_1) + self.fc2_1(u1_2))
++        # 输入两支互换后，这一层的输出两支也互换；注意同名模块复用了权重和偏置。
+         u2_3 = torch.tanh(self.fc2_2(u1_3) + self.fc2_4(u1_4))
+         u2_4 = torch.tanh(self.fc2_4(u1_3) + self.fc2_2(u1_4))
+         
+         #第三层的输出结果是两种
+         # u3_1 = torch.tanh(self.fc3_1(u2_1) - self.fc3_1(u2_2))
++        # 同一模块处理两支后相加，交换顺序不改变结果，得到关于 y 的偶对称。
++        # 这个性质无需训练就成立；能否满足 Laplace 方程及边界仍要靠损失优化。
+         u3_2 = torch.tanh(self.fc3_2(u2_3) + self.fc3_2(u2_4))
+ 
+         #最后的输出
+         u = self.fc4_1(u3_2) 
+        
+-        return u
+\ No newline at end of file
++        return u
+diff --git a/Module/PsiNN_poisson.py b/Module/PsiNN_poisson.py
+index 72b6151..527fb99 100644
+--- a/Module/PsiNN_poisson.py
++++ b/Module/PsiNN_poisson.py
+@@ -43,6 +43,9 @@ class Net(nn.Module):
+         self.para_ud_list = []
+ 
+     def forward(self, input):
++        # 两个坐标先用同一个 fc1，再用共享权重组成交换分支，最后求和。
++        # 交换 x,y 后只是分支交换，因此最终 u(x,y)=u(y,x)。
++        # 对称性由连接关系保证；PDE 残差和边界误差仍由 Training.py 训练。
+ 
+         x, y = input[:,0:1], input[:,1:2]
+ 
+diff --git a/Module/Training.py b/Module/Training.py
+index 2bb22cb..f44fdd1 100644
+--- a/Module/Training.py
++++ b/Module/Training.py
+@@ -1,4 +1,9 @@
+ # coding = utf-8
++# 【初学者阅读入口】你在 micrograd 里写的“前向 → loss → backward → 更新”仍是主线。
++# 先只读 Laplace：__init__ 读配置 → train 建网络 → workflow 调度 → mesh_init 准备点
++# → train_adam 循环（net_f 方程损失 + net_b 边界损失）。最后再读学生蒸馏分支。
++# 每个“样本”是一个坐标 (x,y)，网络输出该坐标的 u；这里不是字符分类任务。
++# numpy 处理普通数组，pandas 读取表格；只有 torch 张量才参与这里的自动求导。
+ import numpy as np
+ import torch
+ import torch.optim as optim
+@@ -11,8 +16,15 @@ import Module.PINN as PINN
+ import Module.SingleVis as SingleVis
+ import Module.GroupVis as GroupVis
+ 
++# 固定随机数起点，便于比较实验；不等于保证不同硬件/版本得到完全相同的结果。
+ torch.manual_seed(1234)  # 设置随机种子
+ 
++# 【设备只需先懂这几行】device 是“把计算放在哪里”的标记，不是神经网络的一层。
++# cuda 是 NVIDIA GPU 的计算后端；这台 Apple 芯片 Mac 使用不了 CUDA。
++# is_available() 询问当前进程是否能使用 CUDA；不能就走下面的 CPU 分支。
++# torch.device(...) 只创建位置标记；真正搬数据/模型的是后面的 .to(device)。
++# Apple GPU 的 PyTorch 后端叫 mps；作者原代码没有检测它，所以 Mac 默认用 CPU。
++# CPU 已能学习和运行这些例子，不需要先学 CUDA 编程。psi-NN/repro/run_mac.py 可指定 MPS。
+ if torch.cuda.is_available():
+     device = torch.device('cuda')
+     print("GPU is available")
+@@ -22,12 +34,15 @@ else:
+ class model():
+     def __init__(self, ques_name, ini_num) :
+ 
++        # self 表示这一次实验对象；self.xxx 让不同方法能共享配置、网络和训练结果。
++        # 例如 model('Laplace','EXP') 读取 Config/Laplace_EXP.csv。
+         # 使用文件进行初始化    
+         self.ques_name = ques_name
+         self.ini_num = ini_num
+ 
+         self.ini_file_path = f'./Config/{ques_name}_{ini_num}.csv'
+ 
++        # CSV 第一列是名字，第二列是值；右边中英文说明列不参与计算。
+         data = pd.read_csv(self.ini_file_path, header=None, names=['key', 'value'], usecols=[0, 1]) 
+ 
+         self.model_ini_dict = {}
+@@ -90,6 +105,8 @@ class model():
+ 
+         # 读取隐藏层的节点组数
+         self.hidden_layers_group = list(map(float, self.model_ini_dict['hidden_layers_group'].split(',')))
++        # layers 列表包括输入、每个隐藏层、输出的宽度。
++        # Laplace 当前配置：2 个坐标 → 8 → 8 → 16 → 1 个 u。
+         self.layer = [self.input_num, self.output_num]
+         self.layer[1:1] = list(map(lambda x: x * self.node_num, self.hidden_layers_group))  # 这里是插入的意思
+         self.layer = list(map(int, self.layer))
+@@ -104,6 +121,8 @@ class model():
+         self.grid_node_num = self.model_ini_dict['grid_node_num']  
+ 
+         # 监督值的有无，直接根据文件名标识，不要重复定义
++        # inv 是 inverse（逆问题）：除解函数外还要从观测数据识别未知物理系数。
++        # 这些开关由实验名字触发，换名字会改变训练分支；不是随便起的输出文件名。
+         self.monitor_state = True if 'inv' in self.ques_name or 'global' in self.ques_name else False
+ 
+         # 正则化的有无
+@@ -122,6 +141,7 @@ class model():
+         self.figure_node_num = self.model_ini_dict['figure_node_num']    
+ 
+         # 是否蒸馏学习这里就不多重定义了，直接根据文件名标识
++        # distill 表示蒸馏：先训练教师，再让学生拟合教师的预测。
+         self.distill_state = True if 'distill' in self.ques_name else False
+         # 蒸馏学习应该是也有正逆问题的，所以不能删减inv标识
+ 
+@@ -182,6 +202,11 @@ class model():
+ 
+     # 这里定义一下计算场
+     def mesh_init(self):
++        # 配点 = 要检查 PDE 是否成立的位置。它们不一定附带真实 u 标签。
++        # requires_grad=True：记录与坐标有关的运算，以后才能计算 du/dx、d²u/dx²。
++        # 坐标可求导不代表要优化坐标；优化谁取决于交给 optimizer 的参数列表。
++        # .float() 统一为 float32；.to(device) 移到指定设备；reshape([-1,1]) 变成列。
++        # -1 表示自动推断该维长度，例如 10201 个数变成 [10201,1]。
+         if self.coord_num == 3:
+             self.x = np.linspace(self.x_min, self.x_max, self.grid_node_num).reshape([-1,1])
+             self.y = np.linspace(self.y_min, self.y_max, self.grid_node_num).reshape([-1,1])
+@@ -203,6 +228,8 @@ class model():
+         else:   
+             self.x = torch.linspace(self.x_min, self.x_max, self.grid_node_num, requires_grad=True).float().to(device)
+             self.y = torch.linspace(self.y_min, self.y_max, self.grid_node_num, requires_grad=True).float().to(device)
++            # 两条长度 101 的数轴组合成 101×101 个坐标点，然后各自拉平成列。
++            # x、y 均为 [N,1]，此处 N=10201；同一行组成一个二维采样位置。
+             self.x, self.y = torch.meshgrid(self.x, self.y, indexing='ij')
+             self.x = self.x.reshape([-1, 1])
+             self.y = self.y.reshape([-1, 1])
+@@ -217,6 +244,9 @@ class model():
+ 
+     # 边界条件损失
+     def net_b(self):    
++        # b = boundary。方程本身通常不足以确定唯一解，还要告诉网络边界是什么。
++        # 下面对边界坐标做前向预测，将预测与已知边界值相减、平方、平均得到损失。
++        # Laplace 中不需要先给每个内部点的真解，边界值 + PDE 就提供了训练信号。
+         loss_b = torch.tensor(0.).to(device)
+ 
+         # 流动的边界条件
+@@ -280,6 +310,7 @@ class model():
+                 self.bun_node_num = 1000
+ 
+             #x最小,y任意
++            # 固定 x 为 x_min，令 y 沿边界变化，就得到左边界；下面同理构造其余三边。
+             y_b = torch.linspace(self.y_min, self.y_max, self.bun_node_num, requires_grad=True).float().to(device).reshape([-1,1])
+             x_b = torch.full_like(y_b, self.x_min, requires_grad=True).float().to(device).reshape([-1,1])
+             u_b = self.net(torch.cat([x_b, y_b], dim=1))
+@@ -338,6 +369,10 @@ class model():
+         return loss_b
+     
+     def net_f(self):
++        # f 在这里表示方程残差损失。先预测函数 u，再把它的导数代入方程。
++        # torch.cat([x,y], dim=1)：两列拼成 [N,2]，而不是拼成 [2N,1]。
++        # 网络逐行处理坐标，输出 u 的形状是 [N,1]（Flow 是 [N,3]）。
++        # .to(device) 前后不是“调用 CUDA 算法”；模型和输入位于同一设备即可执行。
+         
+         loss_f = torch.tensor(0.).to(device)
+         u = self.net(torch.cat([self.x, self.y], dim=1)).to(device)
+@@ -377,16 +412,29 @@ class model():
+             return loss_f
+ 
+ 
++        # 【PINN 最关键的新知识：对输入求导】
++        # micrograd 通常求 dloss/d权重；这里先求 du/d坐标，稍后仍要对权重反传。
++        # grad(outputs=u, inputs=x) 返回一个元组，[0] 取对 x 的导数张量。
++        # u 有 N 个输出，grad_outputs=ones_like(u) 相当于求 sum(u) 对 x 的梯度。
++        # 当前网络每个样本独立前向，因此得到每个点自己的 du_i/dx_i，形状 [N,1]。
++        # 若未来加入跨样本耦合的操作，该解释就需要重新检查，不能无条件照搬。
++        # create_graph=True：求导过程也建图，才能继续求二阶导，并把 PDE 损失传回权重。
++        # retain_graph=True：保留已有计算图，供后续对同一前向结果的求导重复使用。
++        # 两个开关含义不同；不必模仿原码把它们加到所有普通训练循环中。
+         u_x = torch.autograd.grad(u, self.x, grad_outputs=torch.ones_like(u), retain_graph=True, create_graph=True)[0]    #这就是自动微分的一整个公式，直接照着抄就行了
+         if 'Burgers' not in self.ques_name:
+             u_xx = torch.autograd.grad(u_x, self.x, grad_outputs=torch.ones_like(u_x), retain_graph=True, create_graph=True)[0]
+         u_y = torch.autograd.grad(u, self.y, grad_outputs=torch.ones_like(u), retain_graph=True, create_graph=True)[0]
+         u_yy = torch.autograd.grad(u_y, self.y, grad_outputs=torch.ones_like(u_y), retain_graph=True, create_graph=True)[0]
++        # 此处实验机补丁跳过 Burgers 不使用的三阶导数；其余分支仍保留作者计算。
+         if 'Burgers' not in self.ques_name:
+             u_yyy = torch.autograd.grad(u_yy, self.y, grad_outputs=torch.ones_like(u_yy), retain_graph=True, create_graph=True)[0]
+ 
+         #方程误差
+         if 'Burgers' in self.ques_name:
++            # 此案例的变量名容易误导：self.x 承担时间 t，self.y 承担空间坐标。
++            # 所以下行对应 u_t + u*u_space - lambda*u_space_space。
++            # 与论文非线性项符号的差异详见 docs/论文与源码逐步对照.md。
+             if 'inv' in self.ques_name:
+                 loss_f = torch.mean((u_x + u*u_y - self.para_undetermin[0]* u_yy)**2)
+                 # print(loss_f)
+@@ -396,6 +444,8 @@ class model():
+                 # loss_f = torch.mean((u_x + u*u_y - 0.01 / torch.pi * u_yy)**2)
+         
+         elif 'Laplace' in self.ques_name:
++            # Laplace 方程要求 u_xx + u_yy = 0。
++            # 残差平方后 mean，得到一个标量；越小表示这些配点上越接近满足方程。
+             if 'inv' in self.ques_name:
+                 loss_f = torch.mean((u_xx + self.para_undetermin[0] * u_yy)**2)
+             else:
+@@ -416,6 +466,9 @@ class model():
+         return loss_f
+         
+     def net_rgl(self, mode = 'teacher', object = 'all', reg_type ='l2', weight_rgl = 1e-3):
++        # 参数正则项：除了拟合输出，还给权重规模增加代价，参与总损失反向传播。
++        # 学生由教师输出监督，因而可以在不直接求 PDE 导数的阶段接受该正则化。
++        # 注意作者的 l2 实际调用 norm(p=2)，未平方；不等于常见的 sum(W**2)。
+         loss_rgl = torch.tensor(0.).to(device)
+ 
+         if mode == 'teacher':
+@@ -497,6 +550,8 @@ class model():
+ 
+     # 有无监督值可以根据state判断。
+     def net_d(self, mode = 'teacher'):
++        # d = data。这里的监督点才有已知 u；从 CSV 提取坐标与对应观测值。
++        # 对比：net_f 用“方程成立”作监督；net_b 用“边界值正确”作监督。
+         loss_d = torch.tensor(0.).to(device)
+ 
+         if mode == 'student' and self.k_value <= 0:
+@@ -557,6 +612,9 @@ class model():
+     
+ 
+     def net_teach(self, weight_teach = 1):
++        # 同一批坐标分别送入教师和学生，学生要拟合的是教师输出。
++        # 与分类蒸馏不同，此处直接计算连续函数值的均方差，没有 softmax/温度参数。
++        # 原实现没有 detach 教师输出，会额外计算教师梯度；学生优化器不更新教师。
+ 
+                
+         if self.para_ctrl_add:
+@@ -594,15 +652,21 @@ class model():
+ 
+   
+     def train_adam(self):
++        # 下面是你已经熟悉的训练循环。Adam 替你完成根据梯度更新参数这一步，
++        # 并结合历史梯度调整更新尺度；学习率仍控制整体步长，不必先推导完整公式。
++        # para_undetermin 存未知 PDE 系数（如黏度）；Parameter 标记它是可训练变量。
+         self.para_undetermin = torch.zeros(self.para_ctrl_num, requires_grad=True).float().to(device)
+         self.para_undetermin = torch.nn.Parameter(self.para_undetermin)
+ 
+         if 'Poisson' in self.ques_name:
+             self.learning_rate = 1e-3
+         
++        # parameters() 收集模型的权重/偏置；再加未知系数，交给同一个优化器。
++        # 坐标 x、y 虽然 requires_grad=True，但不在这里，所以不会被 optimizer 更新。
+         self.optimizer = optim.Adam(list(self.net.parameters()) + [self.para_undetermin], lr=self.learning_rate)
+ 
+        
++        # scheduler 调整步长，不负责求梯度或更新权重；未配置时不启用。
+         # 上游只有 Flow_EXP.csv 定义了 milestone，其余配置此项为 None，
+         # 而 torch 的 MultiStepLR 不接受 None（内部 list(None) 会抛 TypeError）。
+         # 按作者原意处理：没有 milestone 就不使用学习率调度器。
+@@ -621,10 +685,12 @@ class model():
+ 
+             for iter_inner in range(self.train_steps): 
+ 
++                # 1. 清空上一轮梯度。PyTorch 默认累加 .grad，不会每轮自动归零。
+                 self.optimizer.zero_grad() 
+ 
+                 if self.load_study_state:
+                     break
++                # 2. 前向预测并组成损失；net_f 内还会对坐标求导，这是 PINN 新增的一段。
+                 self.loss_f = self.net_f()           
+                 if 'inv' in self.ques_name:
+                     if 'Poisson' in self.ques_name:
+@@ -648,12 +714,15 @@ class model():
+                     self.loss += self.loss_rgl
+                 
+ 
++                # 3. backward 把这个标量损失对参数的导数写入各参数的 .grad。
++                # 原实现保留计算图；普通监督学习通常直接 loss.backward() 即可。
+                 if 'Flow' in self.ques_name:
+                     loss = self.loss_f + self.bcs_weight * self.loss_b[0]
+                     loss.backward(retain_graph=True) 
+                 else:
+                     self.loss.backward(retain_graph=True)
+ 
++                # 4. 用刚才的梯度更新参数，相当于 micrograd 中手写 p -= lr*p.grad。
+                 self.optimizer.step()    
+                 if self.scheduler is not None:
+                     self.scheduler.step()
+@@ -661,6 +730,8 @@ class model():
+ 
+                 self.net.iter += 1
+                 self.net.iter_list.append(self.net.iter)
++                # .item() 把单元素张量取成 Python 数字，用于日志，不再携带梯度图。
++                # 因此不要先对 loss 调 .item() 再试图 backward；那时已经不是张量了。
+                 self.net.loss_list.append(self.loss.item())
+                 self.net.loss_f_list.append(self.loss_f.item())
+                 if 'Flow' in self.ques_name:
+@@ -707,7 +778,8 @@ class model():
+ 
+             if self.distill_state:
+ 
+-
++                # 教师训练结束后才训练学生：蒸馏损失 + 参数正则（k=0 时观测项为零）。
++                # 第二个优化器只持有学生参数，因此下面 step() 不改变教师权重。
+                 for iter_inner in range(int(self.train_steps * self.train_ratio)):
+                     
+                     self.optimizer_student.zero_grad()
+@@ -758,6 +830,8 @@ class model():
+         if self.distill_state:
+             print(f'\nTime occupied (student): {(self.time_list[1]):.5e} s.\n')
+     def model_save(self, suffix:str ='', mode:str='teacher'):
++        # state_dict 是“参数名字 → 张量”的字典。torch.save 保存它，不会保存训练进程。
++        # 本方法另存 CSV 记录损失/配置；只恢复权重不等于完整恢复 Adam 的历史状态。
+ 
+         if not os.path.exists(f'./Results/'):
+             os.mkdir(f'./Results/')
+@@ -863,6 +937,8 @@ class model():
+ 
+ 
+     def result_show(self):
++        # 训练完在一批绘图坐标上预测；detach() 脱离求导图，cpu() 搬回 CPU，
++        # numpy() 转成绘图库认识的数组。它们用于展示，不属于参数更新步骤。
+         x = np.linspace(self.x_min, self.x_max, self.figure_node_num).reshape([-1,1])
+         y = np.linspace(self.y_min, self.y_max, self.figure_node_num).reshape([-1,1])
+         z = np.linspace(self.z_min, self.z_max, self.figure_node_num).reshape([-1,1]) if self.coord_num == 3 else None
+@@ -905,6 +981,7 @@ class model():
+             u_vis.para_vis()
+ 
+     def workflow(self):
++        # 从这里能看清一次实验的四件事：准备点 → 训练 → 保存 → 绘图。
+         self.mesh_init()
+         self.train_adam()
+         self.model_save() 
+@@ -914,6 +991,7 @@ class model():
+             self.result_show()
+ 
+     def train(self): 
++        # 配置可列出多个模型，下面逐个重新建立并训练，不是把几个模型串成一个网络。
+ 
+         model_define_trigger = 0
+         
+@@ -925,10 +1003,13 @@ class model():
+             self.original_lr = 1e-3 if 'Poisson' in self.ques_name else self.learning_rate
+ 
+             model_define_trigger = 1
++            # 动态导入只是根据配置中的字符串选 Python 文件，不是复杂的深度学习操作。
+             module = importlib.import_module(f"Module.{self.model_ini_dict['model'][i]}")
+             NetClass = getattr(module, 'Net')
+ 
+             if 'PINN' in self.model_ini_dict['model'][i]:
++                # .to(device) 对整个网络调用，会一起移动已注册的权重/偏置。
++                # 输入张量也必须放在同一设备；位置匹配后，PyTorch 自动选择计算实现。
+                 self.net = NetClass(self.layer).float().to(device)
+             else:
+                 self.net = NetClass(self.node_num, self.output_num).float().to(device)
+diff --git a/Panel.py b/Panel.py
+index 4e6a9b7..6aee457 100644
+--- a/Panel.py
++++ b/Panel.py
+@@ -1,4 +1,8 @@
+ import Module.Training as Training
++# 【新手先读】这是实验启动文件；训练细节在 Module/Training.py，网络在 Module/PINN.py。
++# 本文件会执行全部长程实验。先用项目根目录下的以下短程命令观察训练：
++# python psi-NN/repro/run_mac.py --case Laplace --device cpu --steps 100 --tag learning
++# 前三个层次要分清：配置决定宽度/步数；Net 算预测；Training 计算损失并更新参数。
+ 
+ import torch
+ torch.random.manual_seed(1234)

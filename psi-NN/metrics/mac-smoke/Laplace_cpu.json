@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "arguments": {
+      "case": "Laplace",
+      "device": "cpu",
+      "steps": 100,
+      "grid": null,
+      "models": null,
+      "threads": 4,
+      "tag": "smoke"
+    },
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "mps_built": true,
+    "mps_available": false,
+    "note": "Short runs test execution and cost, not paper accuracy. Plotting disabled."
+  },
+  "results": [
+    {
+      "model": "PINN",
+      "steps": 100,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 257,
+      "elapsed_seconds": 1.4939290839975001,
+      "training_seconds": 0.7251839637756348,
+      "seconds_per_teacher_step": 0.007251839637756347,
+      "first_loss": 5.541837692260742,
+      "final_loss": 5.324007034301758,
+      "peak_process_rss_mib": 401.453125,
+      "field_mse": 0.3431485891342163,
+      "relative_l2": 0.9712620973587036,
+      "even_y_max_error": 0.024404332041740417
+    },
+    {
+      "model": "PINN_post_plus",
+      "steps": 100,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 257,
+      "elapsed_seconds": 1.4674814160025562,
+      "training_seconds": 1.4644315242767334,
+      "seconds_per_teacher_step": 0.014644315242767334,
+      "first_loss": 5.552151203155518,
+      "final_loss": 5.122564792633057,
+      "peak_process_rss_mib": 459.859375,
+      "field_mse": 0.331169456243515,
+      "relative_l2": 0.9541582465171814,
+      "even_y_max_error": 0.0
+    },
+    {
+      "model": "PsiNN_laplace",
+      "steps": 100,
+      "grid": 101,
+      "interior_points": 10201,
+      "parameters": 329,
+      "elapsed_seconds": 1.566777332998754,
+      "training_seconds": 1.5636248588562012,
+      "seconds_per_teacher_step": 0.01563624858856201,
+      "first_loss": 6.927257061004639,
+      "final_loss": 6.166717529296875,
+      "peak_process_rss_mib": 500.484375,
+      "field_mse": 0.42056336998939514,
+      "relative_l2": 1.0752538442611694,
+      "even_y_max_error": 0.0
+    }
+  ]
+}

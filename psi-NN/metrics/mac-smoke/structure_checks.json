@@ -1,0 +1,10 @@
+{
+  "laplace_even_y_max_error": 0.0,
+  "poisson_swap_max_error": 0.0,
+  "burgers_odd_y_max_error": 0.034336358308792114,
+  "burgers_output_bias": -0.01716817542910576,
+  "burgers_odd_error_minus_twice_bias": 2.2351741790771484e-08,
+  "flow_even_p_u_max_error": 0.22054828703403473,
+  "flow_odd_v_max_error": 0.3500487208366394,
+  "note": "Untrained networks. Nonzero errors show a property is not guaranteed for all parameter values."
+}
