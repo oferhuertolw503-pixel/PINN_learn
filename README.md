@@ -24,7 +24,7 @@
 | [`psi-NN/repro/`](psi-NN/repro/) | 自己编写的训练入口、结构提取、独立评估与受约束重训脚本 |
 | [`psi-NN/configs/`](psi-NN/configs/) | 个人实验使用的配置快照；文件名区分试跑、论文表格与敏感性检查 |
 | [`psi-NN/patches/`](psi-NN/patches/) | 相对于作者仓库固定提交的本机修补，便于第二台机器理解改动 |
-| [`psi-NN/metrics/phase1.csv`](psi-NN/metrics/phase1.csv) | 脱离本机绝对路径的小型机器可读指标摘要 |
+| [`psi-NN/metrics/phase1.csv`](psi-NN/metrics/phase1.csv)、[`poisson_diagnostics.csv`](psi-NN/metrics/poisson_diagnostics.csv)、[`flow_pilot.csv`](psi-NN/metrics/flow_pilot.csv) | 脱离本机绝对路径的小型机器可读指标摘要；Poisson 两种调度分开、Flow 明确标为短程试跑 |
 | `psi-NN/Psi-NN/` | 作者源码的独立检出目录，**不属于本仓库**，被 `.gitignore` 排除 |
 
 作者源码来自 [ZitiLiu/Psi-NN](https://github.com/ZitiLiu/Psi-NN)，本次复现固定参考提交 `2c11ce6df1bcfcf630d05f162d5795d7fa4fdb43`。本仓库中我原创的代码、配置和文档按 [Apache-2.0](LICENSE) 发布；上游补丁的来源与改动见 [NOTICE](NOTICE)。作者源码保留其原有许可，论文 PDF 与训练产物不随仓库发布。

@@ -1,6 +1,6 @@
 # Ψ-NN 个人复现脚本
 
-> **公开仓库入口**：请先读 [`../../README.md`](../../README.md) 和 [`../../docs/phase-1-psi-nn.md`](../../docs/phase-1-psi-nn.md)。本页主要保留 Burgers 早期操作记录；其中的绝对路径、环境安装命令和“Laplace 未运行”等表述属于 2026-10-15 以前的历史快照，不是跨机器执行清单。当前已完成的 Laplace / Burgers 数值和方法边界以第一阶段记录为准。运行环境以现有依赖为前提，任何新安装需另行确认。
+> **公开仓库入口**：请先读 [`../../README.md`](../../README.md) 和 [`../../docs/phase-1-psi-nn.md`](../../docs/phase-1-psi-nn.md)。本页主要保留 Burgers 早期操作记录；其中的绝对路径、环境安装命令和“Laplace 未运行”等表述属于 2026-10-15 以前的历史快照，不是跨机器执行清单。当前已完成 Burgers、Laplace、Poisson 的阶段比较与 Flow 短程试跑；数值和方法边界以第一阶段记录为准。运行环境以现有依赖为前提，任何新安装需另行确认。
 
 论文：*Automatic network structure discovery of physics informed neural networks via knowledge distillation*, Nature Communications 16, 9558 (2025).
 
@@ -22,7 +22,7 @@
 | ④ 以固定聚类关系重训 | `repro/clustered_burgers.py` / `run_reconstructed.py` | ✅ 37 参数试验；未复现作者完整的块合并与重初始化 |
 | ⑤ 比较模型 | `Module/PsiNN_burgers.py`、PINN、PINN-post | ✅ 各 100,000 步；`PsiNN_burgers` 是预写结构，不是步骤③的自动产物 |
 
-**截至该 Burgers 阶段未做的**：论文完整的自动结构重构、Laplace / Poisson / Flow 三个算例，以及跨控制参数迁移实验。此后 Laplace 已完成部分复现，见公开的第一阶段记录。
+**截至该 Burgers 阶段未做的**：论文完整的自动结构重构、Laplace / Poisson / Flow 三个算例，以及跨控制参数迁移实验。此后 Laplace 与 Poisson 已完成阶段比较，Flow 完成 1,000 步/模型的 pilot；完整自动重构和长程 Flow 仍未完成，见公开的第一阶段记录。
 
 ---
 
@@ -154,4 +154,6 @@ git -C /mnt/d/work/research/PINN/psi-NN/Psi-NN diff      # 查看
 | `extract_structure.py` | `pic_parameter.ipynb` 第 2、4 单元的无头版（默认 Ward；`--linkage average` 对齐补充材料）+ 字母矩阵 + JSON |
 | `evaluate_burgers.py` | 用 Cole–Hopf 解独立计算整域 MSE、相对 L2，并核对作者观测数据 |
 | `evaluate_laplace.py` | 用解析解独立计算 Laplace 整域 MSE、相对 L2、边界与对称误差 |
+| `evaluate_poisson.py` | 按训练 PDE 推导的解析解评价 Poisson，并显示作者参考式冲突 |
+| `evaluate_flow.py` | 对作者流场 CSV 的 `p/u/v` 做同域比较及镜像对称检查；不是独立工程验证 |
 | `run_reconstructed.py` | 把提取的符号矩阵作为固定参数共享关系，以可学习簇中心重训；不含论文后续人工块合并 |
