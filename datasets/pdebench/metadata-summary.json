@@ -1,0 +1,15 @@
+{
+  "dataset": "PDEBench Datasets",
+  "doi": "10.18419/darus-2986",
+  "checked_on": "2026-10-23",
+  "version": "8.0",
+  "release_time": "2024-02-13T12:00:54Z",
+  "license": {
+    "name": "CC BY 4.0",
+    "uri": "http://creativecommons.org/licenses/by/4.0",
+    "iconUri": "https://licensebuttons.net/l/by/4.0/88x31.png"
+  },
+  "files": 336,
+  "total_bytes": 3902903970421,
+  "metadata_url": "https://darus.uni-stuttgart.de/api/datasets/:persistentId/?persistentId=doi:10.18419/darus-2986"
+}

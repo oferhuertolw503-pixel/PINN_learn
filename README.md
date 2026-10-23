@@ -4,6 +4,8 @@
 
 当前为第一阶段：精读并独立核验 [Ψ-NN 论文](https://doi.org/10.1038/s41467-025-64624-3) 中的知识蒸馏、权重聚类和网络重构。实验结果是**个人复现**，不代表论文作者的官方结果；“作者预写 Ψ-NN”与“从学生网络自动发现结构”在本仓库中严格区分。
 
+新增后续方向：[SHRED 流程与稀疏传感器重建](docs/phase-2-shred.md)，以及 [PDEBench 数据集](datasets/pdebench/README.md)的接入准备。目前完成材料下载和原模型的小型合成数据检查，尚未完成 SST/PDEBench 上的 SHRED 复现；不因此将第一阶段标为完成。
+
 ## 两台电脑如何协作
 
 | 设备 | 主要工作 | 通过 Git 同步 |
@@ -19,6 +21,10 @@
 |---|---|
 | [`docs/phase-1-psi-nn.md`](docs/phase-1-psi-nn.md) | 已做实验、真实指标、未完成部分、下一步判据；含英文术语 |
 | [`docs/learning-progress.md`](docs/learning-progress.md) | 两机学习进度交接、Mac 已完成内容与接下来阅读的位置 |
+| [`AGENTS.md`](AGENTS.md) | 每轮先读取 GitHub 最新信息的约定及双机协作规则 |
+| [`docs/phase-2-shred.md`](docs/phase-2-shred.md) | SHRED 的输入、LSTM、解码器、损失、重建与预测之别，以及后续验证顺序 |
+| [`shred/`](shred/README.md) | SHRED 下载清单、固定提交、文件哈希、自己的最小运行入口与摘要 |
+| [`datasets/pdebench/`](datasets/pdebench/README.md) | PDEBench 数据说明、336文件目录、体量与许可、样本检查入口 |
 | [`docs/从micrograd读懂PINN.md`](docs/从micrograd读懂PINN.md) | 面向 Zero to Hero 前两集基础的源码阅读说明 |
 | [`docs/论文与源码逐步对照.md`](docs/论文与源码逐步对照.md) | 论文步骤与原版源码的函数对应、实现差异和 Mac 短程检查 |
 | [`psi-NN/repro/`](psi-NN/repro/) | 自己编写的训练入口、结构提取、独立评估与受约束重训脚本 |
@@ -41,6 +47,8 @@
 协作时，Mac 负责提交笔记/代码修改，实验机在新实验前同步这些提交；实验机只提交经核对的配置、评估摘要和必要图表，不提交 checkpoint。每次新实验按 [实验记录模板](docs/experiment-log-template.md) 记录代码提交、配置、种子与评估口径，避免两台机器上的同名实验含义不同。
 
 GitHub 以 **commit → push → pull** 为同步单位，不是两台电脑对同一文件的实时协同编辑；实验机运行前先确认已经拿到 Mac 的最新提交，避免代码版本与指标对不上。
+
+每轮项目对话开始时，先读取 GitHub 最新 README、学习进度和相关阶段文档；保留未提交工作，不强行覆盖。无法联网时明确说明本轮未同步。持久约定见 [AGENTS.md](AGENTS.md)。下载的 SHRED/PDEBench 独立源码、论文和原始数据留在本机，另一台电脑按 [资料清单与下载工具](shred/README.md)复建，不通过 Git 提交这些大文件。
 
 Mac 的中文教学注释单独保存在 [`learning-comments.patch`](psi-NN/patches/learning-comments.patch)，在现有运行补丁之后可选应用；[补丁说明](psi-NN/patches/README.md)给出顺序与校验方法。注释不改变可执行逻辑。Mac 的历史短程摘要在 [`metrics/mac-smoke/`](psi-NN/metrics/mac-smoke/README.md)，与实验机正式指标分开保存。
 

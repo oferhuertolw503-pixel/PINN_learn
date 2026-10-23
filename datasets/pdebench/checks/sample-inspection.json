@@ -1,0 +1,8 @@
+{
+  "file": "Sod6.hdf5",
+  "bytes": 4948776,
+  "md5": "adb2d95bf0d48e03bc0d8f4a2cbcd1c6",
+  "checksum_verified": true,
+  "hdf5_signature_verified": true,
+  "inspection": "header/checksum only; h5py is not installed; array shapes are NOT inspected"
+}

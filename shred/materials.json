@@ -1,0 +1,67 @@
+{
+  "checked_on": "2026-10-23",
+  "repositories": [
+    {
+      "name": "original-shred",
+      "url": "https://github.com/Jan-Williams/pyshred.git",
+      "path": "shred/upstream/original-shred",
+      "commit": "e5b122259f59cb0d4a91fa60da812349616380b3"
+    },
+    {
+      "name": "shred-rom",
+      "url": "https://github.com/MatteoTomasetto/SHRED-ROM.git",
+      "path": "shred/upstream/shred-rom",
+      "commit": "7af54021c242b9e598a5ecf7d5a5df8f7e36e700"
+    },
+    {
+      "name": "pyshred",
+      "url": "https://github.com/pyshred-dev/pyshred.git",
+      "path": "shred/upstream/pyshred",
+      "commit": "7fd18dea90e41652fe9955b35748a562c683a616"
+    },
+    {
+      "name": "pdebench",
+      "url": "https://github.com/pdebench/PDEBench.git",
+      "path": "datasets/pdebench/upstream",
+      "commit": "4ff3e3a4aa1561721b5571fa3a048a0a463e0568"
+    }
+  ],
+  "files": [
+    {
+      "title": "Sensing with shallow recurrent decoder networks",
+      "path": "shred/papers/sensing-with-shallow-recurrent-decoders.pdf",
+      "url": "https://arxiv.org/pdf/2301.12011",
+      "bytes": 8734492,
+      "sha256": "7e5f0f904a2f757d433d305a23829c285884445aa3ab1f2f3d58091cd79832ae"
+    },
+    {
+      "title": "Reduced Order Modeling with Shallow Recurrent Decoder Networks",
+      "path": "shred/papers/shred-rom.pdf",
+      "url": "https://arxiv.org/pdf/2502.10930",
+      "bytes": 7361626,
+      "sha256": "7a0ed1854031d953baff183a87e08df60dab4f8f472e6be4fd1f50efba620f53"
+    },
+    {
+      "title": "PySHRED package paper",
+      "path": "shred/papers/pyshred.pdf",
+      "url": "https://arxiv.org/pdf/2507.20954",
+      "bytes": 3316544,
+      "sha256": "6933a29c55d59642249d941ed96f4b0c40cd502f1918162ca2e2dcb047a6be76"
+    },
+    {
+      "title": "Original SHRED SST example data",
+      "path": "shred/data/SST_data.mat",
+      "url": "https://media.githubusercontent.com/media/Jan-Williams/pyshred/e5b122259f59cb0d4a91fa60da812349616380b3/Data/SST_data.mat",
+      "bytes": 187391805,
+      "sha256": "5c49c487d48183b9ec6e6e0a8f3044c964c5731ed8a00b8074f37f395264b0e8"
+    },
+    {
+      "title": "PDEBench Sod6 schema sample",
+      "path": "datasets/pdebench/data/Sod6.hdf5",
+      "url": "https://darus.uni-stuttgart.de/api/access/datafile/133150",
+      "bytes": 4948776,
+      "sha256": "43fe3a129579cd8bd38d5a84502a9f45ed307d8af55fdc631d8fba53998e4d74"
+    }
+  ],
+  "scope": "Upstream checkouts, papers and data stay local; manifest only is synced."
+}

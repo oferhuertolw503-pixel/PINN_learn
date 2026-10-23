@@ -1,5 +1,11 @@
 # The upstream author repository is a separate checkout, not this project's source.
 /psi-NN/Psi-NN/
+/shred/upstream/
+/shred/papers/
+/shred/data/
+/datasets/pdebench/upstream/
+/datasets/pdebench/data/
+/datasets/pdebench/dataset-metadata.json
 
 # Local research materials and machine-specific notes (not cleared for publication).
 /复现工作记录.md

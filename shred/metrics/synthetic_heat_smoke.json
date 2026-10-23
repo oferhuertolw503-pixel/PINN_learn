@@ -1,0 +1,121 @@
+{
+  "status": "synthetic pipeline smoke only; not SST, PDEBench or a paper reproduction",
+  "seed": 1234,
+  "original_shred_commit": "e5b122259f59cb0d4a91fa60da812349616380b3",
+  "device": "cpu",
+  "torch": "2.14.1",
+  "epochs": 10,
+  "data_shape": [
+    32,
+    64,
+    64
+  ],
+  "sensor_indices": [
+    3,
+    22,
+    43
+  ],
+  "lag": 8,
+  "split_trajectory_ids": {
+    "train": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ],
+    "validation": [
+      24,
+      25,
+      26,
+      27
+    ],
+    "test": [
+      28,
+      29,
+      30,
+      31
+    ]
+  },
+  "input_shape": [
+    1368,
+    8,
+    3
+  ],
+  "target_shape": [
+    1368,
+    64
+  ],
+  "hidden_size": 16,
+  "hidden_layers": 1,
+  "decoder_sizes": [
+    32,
+    32
+  ],
+  "parameters": 5056,
+  "test_physical_mse": 0.210078626871109,
+  "test_relative_l2": 0.5644650459289551,
+  "training_mean_baseline_mse": 0.6211751699447632,
+  "elapsed_seconds": 0.1613499579980271,
+  "history": [
+    {
+      "epoch": 1,
+      "validation_normalized_mse": 1.2450205087661743
+    },
+    {
+      "epoch": 2,
+      "validation_normalized_mse": 1.1511329412460327
+    },
+    {
+      "epoch": 3,
+      "validation_normalized_mse": 0.9589968919754028
+    },
+    {
+      "epoch": 4,
+      "validation_normalized_mse": 0.8599449992179871
+    },
+    {
+      "epoch": 5,
+      "validation_normalized_mse": 0.8739215731620789
+    },
+    {
+      "epoch": 6,
+      "validation_normalized_mse": 0.8434947729110718
+    },
+    {
+      "epoch": 7,
+      "validation_normalized_mse": 0.7832542061805725
+    },
+    {
+      "epoch": 8,
+      "validation_normalized_mse": 0.7716165781021118
+    },
+    {
+      "epoch": 9,
+      "validation_normalized_mse": 0.7392001748085022
+    },
+    {
+      "epoch": 10,
+      "validation_normalized_mse": 0.6903599500656128
+    }
+  ]
+}
