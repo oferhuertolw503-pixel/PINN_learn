@@ -35,6 +35,10 @@
 
 作者源码来自 [ZitiLiu/Psi-NN](https://github.com/ZitiLiu/Psi-NN)，本次复现固定参考提交 `2c11ce6df1bcfcf630d05f162d5795d7fa4fdb43`。本仓库中我原创的代码、配置和文档按 [Apache-2.0](LICENSE) 发布；上游补丁的来源与改动见 [NOTICE](NOTICE)。作者源码保留其原有许可，论文 PDF 与训练产物不随仓库发布。
 
+## Mac 学习环境
+
+Mac 在新目录使用 `uv + .venv`，不依赖 Conda；日常只需激活项目环境。见 [操作说明](docs/mac-environment.md) 与 [依赖版本](requirements-mac-learning.txt)。该环境仅用于阅读和短程检查，不替换 WSL CUDA 环境。
+
 ## 实验机的复建顺序
 
 1. 获取本仓库，并在 `psi-NN/Psi-NN/` 单独检出上游固定提交；不要把上游目录当成本仓库普通文件提交。

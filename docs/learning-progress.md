@@ -1,6 +1,14 @@
 # 两机学习进度交接
 
-同步日期：2026-10-23。当前用户基础为 Karpathy Zero to Hero 前两集，学习目标是从源码明确理解每个 PDE 怎么准备输入、构造网络与损失、求导和更新参数；希望以实战贯通，暂不需要完整课程体系。
+同步日期：2026-10-29。当前用户基础为 Karpathy Zero to Hero 前两集，学习目标是从源码明确理解每个 PDE 怎么准备输入、构造网络与损失、求导和更新参数；希望以实战贯通，暂不需要完整课程体系。
+
+## 2026-10-29 Mac 目录与环境迁移
+
+- 主开发副本已迁至新的 Project 目录，源码、论文、SST/PDEBench 本地材料已复制校验；原目录仅作备份，用户明确不保留其中的 PPT。
+- 用户已删除 Conda。核查旧 Mac 虚拟环境原本使用 Codex 运行时 Python，并不依赖 Conda；本次进一步用已安装的 uv 获取独立 Python 3.12.14，在新仓库创建不继承系统包的 `.venv`。
+- 八个直接依赖保持原版本，32个实际安装包的完整版本见 [requirements-mac-learning.txt](../requirements-mac-learning.txt)。不再依赖旧目录、Conda 或 Codex Python；WSL CUDA 环境未改动。
+- 已验证全部关键包从新 `.venv` 导入、依赖一致性检查通过、Metal 后端可用；新环境下 SHRED 两轮合成数据检查和 Laplace 两步 PINN 均执行成功，仅作为迁移验证。
+- 日常激活方式和复建命令见 [Mac 环境说明](mac-environment.md)。环境目录和本机检查日志不提交；正式实验摘要不改写。当前未安装 h5py 或 PySHRED 软件包。
 
 ## 2026-10-23 新接续
 
